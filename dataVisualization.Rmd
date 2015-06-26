@@ -1,0 +1,515 @@
+---
+title: "Visualization"
+author: "joshua"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    highlight: kate
+---
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+library(RCurl)
+library(gcookbook)
+```
+
+# 1. Visualization Intro
+
+
+### 1-1. data visualization의 장점
+
++ 빠른 전달력과 이해력
+    + Insight를 얻을 수 있음
+    + 빈도, 이상치 등 많은 데이터들 중에서 필요한 값 확인
++ 기억하기가 쉬움 
+    + 글보다는 그림이 기억에 오래남음
++ 이쁘고 아름다움 
+    + 보고서용, 설득용으로 딱~!
+
+### 1-2. data visualization의 단점
+
++ 만들기 쉽지 않음
+    + 데이터셋의 대한 이해가 필요
+    + 때론 코드를 작성해야함
++ 너무 많은 데이터는 무엇을 표현하려는지 알 수 없게 만듦
+    + 빅데이터에 대한 visualization을 할 때
++ 왜곡될 우려가 있음
+    + 주장하고 싶은 것에 대한 욕심
+    + scale값에 대한 오해
+    + 변수의 특성을 반영하지 못할 때
+
+### 1-3. data visualization의 예시
+
+# 2. R Visualization
+
+### 2-1. R static visualization packages
+
+- qplot
+- ggplot2
+- igraph
+(etc...)
+
+### 2-2. R dynamic visualization packages
+
+- googleVis
+- rCharts
+- d3Network
+- ggvis
+(etc...)
+
+# 2. ggplot2 package
+
+ggplot2는 자주 쓰이고 유명한 r visualization package 중 하나이다. Layer 개념으로 사용하기 쉽고, 다양한 테마들과 옵션값들을 수정함으로 자신이 원하는 모양의 그래프를 빠르게 그려볼 수 있다. 
+
+### 2-1. ggplot2 package install
+
+먼저 다음 코드를 입력하여 package를 설치하자.
+
+```
+install.packages("ggplot2")
+library(ggplot2)
+```
+
+### 2-2. R plot과 ggplot의 비교
+
+#### 2-2-1. R plot
+
+- gcookbook의 simpledat data
+
+```{r}
+head(simpledat)
+```
+
+```{r}
+barplot(simpledat, beside=TRUE)
+plot(simpledat[1,], type='l')
+lines(simpledat[2,], type='l', col='blue')
+```
+
+#### 2-2-2. ggplot2
+
+- gcookbook의 simpledat_long data
+
+```{r}
+head(simpledat_long)
+```
+
+- ggplot2로 bar graph 만들기
+
+```
+x = Aval
+fill = Bval
+y = value
+그래프 = geom_bar()
+```
+
+```{r}
+ggplot(simpledat_long, aes(x=Aval, y=value, fill=Bval)) + geom_bar(stat="identity", position="dodge")
+```
+
+- ggplot2로 line graph 만들기
+
+```{r}
+ggplot(simpledat_long, aes(x=Aval, y=value, colour=Bval, group=Bval)) + geom_line()
+```
+
+ggplot에는 **Defaults + Layers + Scales + Coordinate System**의 형태로 적용됨
+
+### 2-3. ChickWeight
+
+- 닭 50마리에게 2개월부터 21개월까지 4가지 종류의 다른 식단을 주었을 때 식단에 따른 몸무게 변화를 나타낸 데이터이다.
+
+data visualization을 할 때 가장 중요한 것은 먼저 코딩을 하는 것이 아니라 데이터 셋을 파악하고 생각해 보는 것이다. 어떤 변수들이 무슨 특성을 가지고 있는지 혹은 크기나 규모는 얼마나 되는지 파악한 후 데이터를 어떻게 나타낼 것이지 먼저 **손그림**을 그려보는 것도 좋다. 지금은 간단하게 `R에서 제공하는 데이터 셋`을 기반으로 설명하도록 한다.
+
+다양한 `R에서 제공하는 데이터 셋` 중 ChickWeight라는 데이터셋이 있다. 
+잠깐 살펴보면 다음과 같다.
+
+```{r, echo = FALSE}
+dim(ChickWeight)
+str(ChickWeight)
+```
+
+처음 보는 데이터셋이기 때문에 이해가 잘 가지 않는다면 다음과 같이 입력하여 어떤 데이터셋인지 패널에 나오는 document를 읽어본다.
+
+```
+??ChickWeight
+```
+
+따라해봅시다.
+
+```{r}
+chickLine <- ggplot(ChickWeight, aes(x=Time, y=weight, colour=Diet, group=Chick))
+chickLine + geom_line()
+
+chickSmooth <- ggplot(ChickWeight, aes(x=Time, y=weight, colour=Diet))
+chickSmooth + geom_smooth(alpha=.4, size=3)
+
+chick2Layer <- ggplot(ChickWeight, aes(x=Time, y=weight, colour=Diet))
+chick2Layer + geom_point(alpha=.3) + geom_smooth(alpha=.2, size=1)
+
+chickDensity <- ggplot(subset(ChickWeight, Time == 21), aes(x=weight, colour=Diet))
+chickDensity + geom_density()
+
+chickFacet <- ggplot(subset(ChickWeight, Time==21), aes(x=weight, fill=Diet))
+chickFacet + geom_histogram(colour="black", binwidth = 50) + facet_grid(Diet~.)
+```
+
+따라치면서 공통점을 파악할 수 있었나요?
+간단한 syntax를 설명하자면 다음과 같다.
+
+```
+ggplot(dataset, aes(x, y)) + geom_line()
+```
+
+- 에스테틱(aesthetics)은 도형의 시각적인 속성이다.
+  - X위치, Y위치, 선 색상, 점 모양 등
+- 도형(geom)은 데이터를 표현하기 위한 도형 객체이다.
+  - line, point, bar, histogram etc...
+- 척도(scale)은 데이터 공간의 값들을 에스테틱 공간으로 대입하는 과정을 제어한다.
+- 가이드(guide)는 시각적인 속성들이 데이터 공간에서 어떻게 표현되었는지 나타난다.
+
+### 2-4. Economics
+
+- 미국 경제의 생산성에 관한 시계열 데이터
+
+```{r, echo=FALSE}
+dim(economics)
+str(economics)
+head(economics)
+```
+
+- Economics line
+
+```{r}
+ecoLine <- ggplot(economics, aes(x=date, y=unemploy))
+ecoLine + geom_line()
+```
+
+- Economics line 색상 바꾸기
+
+```{r}
+ecoLine <- ggplot(economics, aes(x=date, y=unemploy))
+ecoLine + geom_line(colour="darkgreen")
+```
+
+- Economics line 모양 바꾸기
+
+```{r}
+ecoLine <- ggplot(economics, aes(x=date, y=unemploy))
+ecoLine + geom_line(linetype=2)
+```
+
+```{r}
+ecoLine <- ggplot(economics, aes(x=date, y=unemploy))
+ecoLine + geom_line(linetype="dotdash")
+```
+
+### 2-5. mtcars
+
+- 1973년 ~ 74년 1년간 자동차모델 비교
+
+```{r, echo=FALSE}
+dim(mtcars)
+str(mtcars)
+head(mtcars)
+```
+
+#### 2-5-1. mtcars point plot
+
+- y축을 0 ~ 40으로 제한
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg, colour=hp))
+mtcarsPoint + geom_point() + coord_cartesian(ylim=c(0,40))
+```
+
+- scale을 연속적으로 보기
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg, colour=hp))
+mtcarsPoint + geom_point() + scale_colour_continuous(breaks=c(100,300))
+```
+
+- guide 조정하기
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg, colour=hp))
+mtcarsPoint + geom_point() + guides(colour="colourbar")
+```
+
+- 특정 부분만 보기
+```{r}
+mtcarsPointPlot <- ggplot(mtcars, aes(x=wt, y=mpg, colour=hp)) + geom_point()
+mtcarsSubset <- mtcars[1:10,]
+mtcarsPointPlot %+% mtcarsSubset
+```
+
+- Point plot 속성 조정하기 1 : 색상, 크기 변경
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg, colour=hp))
+mtcarsPoint + geom_point(aes(colour=factor(cyl)), size=4)
+```
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg))
+mtcarsPoint + geom_point(aes(colour="darkred"), size=4)
+```
+
+- Point plot 속성 조정하기 2 : 모양 변경
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg, colour=hp))
+mtcarsPoint + geom_point(aes(shape=factor(cyl)), size=4)
+```
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg))
+mtcarsPoint + geom_point(shape=5, size=4)
+```
+
+- R에서 기본적으로 제공하는 모양들
+
+```{r}
+shapeType <- data.frame(x=1:5, y=1:25, z=1:25)
+shapeTypePlot <- ggplot(shapeType, aes(x=x, y=y))
+shapeTypePlot + geom_point(aes(shape=z), size=4) + scale_shape_identity()
+```
+
+- 원하는 알파벳이나 모양을 지정할 수도 있다.
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg))
+mtcarsPoint + geom_point(shape="k", size=3)
+```
+
+- 크기에 따라 변경하기
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg))
+mtcarsPoint + geom_point(aes(size=qsec))
+```
+
+#### 2-5-2. mtcars bar plot
+
+- Bar plot
+
+```{r}
+mtcarsBar <- ggplot(mtcars, aes(x=factor(cyl)))
+mtcarsBar + geom_bar()
+```
+
+- Histogram plot
+
+```{r}
+str(mtcars)
+mtcarsHistogram <- ggplot(mtcars, aes(x=drat))
+mtcarsHistogram + geom_histogram()
+```
+
+- Bar plot 색상 바꾸기
+
+```{r}
+mtcarsBar <- ggplot(mtcars, aes(x=factor(cyl)))
+mtcarsBar + geom_bar(fill="red")
+```
+
+- Bar plot 테두리 바꾸기
+```{r}
+mtcarsBar <- ggplot(mtcars, aes(x=factor(cyl)))
+mtcarsBar + geom_bar(colour="red")
+```
+
+- Bar plot 색상 + 테두리 바꾸기
+```{r}
+mtcarsBar <- ggplot(mtcars, aes(x=factor(cyl)))
+mtcarsBar + geom_bar(colour="red", fill="white")
+```
+
+- (**Q**) Bar plot 안에서 변수 구분하기?
+hint : x축은 cyl, 색상은 vs
+
+```{r, echo=FALSE}
+mtcarsBar <- ggplot(mtcars, aes(x=factor(cyl), fill=factor(vs)))
+mtcarsBar + geom_bar()
+```
+
+#### 2-5-3. draw in mtcars plot
+
+- Point plot 수평선 넣기
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg))
+mtcarsPoint + geom_point(size=2.5) + geom_hline(yintercept=25, size=3.5)
+```
+
+- plot안 사각형 넣기
+
+```{r}
+mtcarsPoint <- ggplot(mtcars, aes(x=wt, y=mpg)) + geom_point()
+mtcarsPoint + annotate("rect", xmin=2, xmax=3.5, ymin=20, ymax=25, fill="red", alpha=.3)
+```
+
+#### 2-5-4. mtcars plot 확대하기
+
+- 기본 point + smooth layer
+
+```{r}
+mtcarsPlot <- ggplot(mtcars, aes(x=wt, y=mpg)) +  geom_point() + geom_smooth()
+mtcarsPlot
+```
+
+- x축 확대하기
+
+```{r}
+mtcarsPlot<- qplot(disp,wt, data=mtcars) + geom_smooth()
+mtcarsPlot + scale_x_continuous(limits=c(325,500))
+```
+
+### 2-6. movies
+
+- [imdb](http://imdb.com)에서 수집된 영화 데이터 자료
+
+```{r, echo=FALSE}
+dim(movies)
+str(movies)
+head(movies)
+```
+
+- Histogram
+
+```{r}
+moviesHist <- ggplot(movies, aes(x=rating))
+moviesHist + geom_histogram()
+```
+
+- Histogram 연속적인 색상 입히기
+
+```{r}
+moviesHist <- ggplot(movies, aes(x=rating))
+moviesHist + geom_histogram(aes(fill=..count..))
+```
+
+### 2-7. Diamonds
+
+- 54000여개의 여러가지 속성값을 포함한 다이아몬드 데이터
+
+```{r, echo=FALSE}
+dim(diamonds)
+str(diamonds)
+head(diamonds)
+```
+
+- 컷팅 상태별 무게 보기
+
+```{r}
+diaHist <- ggplot(diamonds, aes(carat, ..density..))
+diaHist + geom_histogram(binwidth=0.2) + facet_grid(.~cut)
+```
+
+- 투명도별 컷 상태
+
+```{r}
+diaHist <- ggplot(diamonds, aes(clarity, fill=cut))
+diaHist + geom_bar()
+```
+
+- 투명도별 컷 상태 역순
+
+```{r}
+diaHist <- ggplot(diamonds, aes(clarity, fill=cut))
+diaHist + geom_bar(aes(order=desc(cut)))
+```
+
+- diamonds Pointrange
+
+```{r}
+diaLm <- lm(price ~ cut, data=diamonds)
+cuts <- data.frame(cut=unique(diamonds$cut), predict(diaLm, data.frame(cut=unique(diamonds$cut)), se=TRUE)[c("fit", "se.fit")])
+head(cuts)
+diaRange <- ggplot(cuts, aes(x=cut, y=fit, ymin=fit-se.fit, ymax=fit+se.fit, colour=cut))
+diaRange + geom_pointrange()
+```
+
+- diamonds stat_bin2d
+
+```{r}
+diaStat <- ggplot(diamonds, aes(x=carat, y=price))
+diaStat + stat_bin2d(bins=25, colour="grey50")
+```
+
+- diamonds boxplot
+
+```{r}
+diaBox <- ggplot(diamonds, aes(x=cut, y=price))
+diaBox + geom_boxplot()
+```
+
+- diamonds boxplot 세로로 변경하기
+
+```{r}
+diaBox <- ggplot(diamonds, aes(x=cut, y=price))
+diaBox + geom_boxplot() + coord_flip()
+```
+
+# 3. 새로운 데이터를 가지고 만들어보자
+
+### 3-1. 데이터 가져오기
+
+```{r}
+url <- "https://raw.githubusercontent.com/joshualog/DataDesigner/master/airPollution.csv"
+airPollution <- getURL(url)
+airPollution <- read.csv(textConnection(airPollution))
+```
+
+### 3-2. 데이터 살펴보기
+
+```{r}
+str(airPollution)
+```
+
+### 3-3. pm10(미세먼지), pm25(초미세먼지) point plot 그리기1
+
+- x축을 미세먼지로 y축을 초미세먼지로 그리기
+- 색상에는 구 값 넣어주기
+
+```{r, echo=FALSE}
+ggplot(airPollution, aes(x=pm10, y=pm25, colour=guName)) + geom_point() + theme(legend.text = element_text(family="Apple SD Gothic Neo"))
+```
+
+### 3-4. pm10(미세먼지), pm25(초미세먼지) point plot 그리기2
+
+- co2에 따른 값 살펴보기
+
+```{r, echo=FALSE}
+ggplot(airPollution, aes(x=pm10, y=pm25, colour=guName)) + geom_point() + facet_grid(.~co) + theme(legend.text = element_text(family="Apple SD Gothic Neo"))
+```
+
+### 3-5. customization
+
+#### 3-5-1. theme 세부속성 변경하기
+
+다 설명하긴 너무 많으므로 help를 이용한다.
+
+```
+??theme - ggplot2
+```
+
+#### 3-5-2. theme 변경하기
+
+- `ggthemes`라는 패키지는 여러가지 테마를 제공하고 있다.
+
+```{r}
+library(ggthemes)
+ecoLine <- ggplot(economics, aes(x=date, y=unemploy))
+ecoLine + geom_line() + theme_economist()
+```
+
+
+# 4. 마무리
+
+기존에 많은 데이터를 원하는 모양으로 표현하기 위하여 excel이나 illustrator, 기존에 있던 통계 프로그램인 SAS, SPSS를 많이 사용해왔다. 하지만 SAS나 SPSS는 원하는 모양대로 customizing하기가 어려웠고, excel 또한 한계가 분명했다. illustrator는 많은 데이터를 일일히 손으로 그려주기엔 무리가 많았다. 그리하여 processing이 탄생하고 javascript에 d3.js, crossfilter.js 등 많은 라이브러리들이 있으나 프로그래밍을 하기까지는 시간이 오래걸린다.
+R은 이런 부분에서 초보자도 쉽게 customizing이 가능하고 많은 양의 데이터를 쉽게 그려줄 수 있도록 다양한 패키지를 제공한다. 개인적인 추천서는 **r graphics cookbook** 으로 어떤 시각화 책보다 많은 index들을 가지고 있으며 이런 부분에 관심이 많다면 한번쯤 읽어보는 것이 좋다.
+
+Copyright(c)2015 by Joshua. All Page content is property of Joshua
